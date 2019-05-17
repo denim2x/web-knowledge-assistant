@@ -1,0 +1,8 @@
+uvicorn=0.7.0
+bareasgi=1.0.3
+bareasgi_static
+PyYAML
+requests
+aiofiles
+azure-storage
+pattern

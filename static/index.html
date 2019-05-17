@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Web Knowledge Assistant</title>
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An engaging virtual assistant capable of answering arbitrary open-ended questions">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" href="https://qnamaker.azureedge.net/Images/icon-support-bot.png">
+  <link rel="icon" type="image/png" href="https://qnamaker.azureedge.net/Images/icon-support-bot.png" sizes="48x48">
+  <link rel="stylesheet" href="master.css" />
+</head>
+
+<body class="Root">
+  <div class="Root-body">
+    <header class="Header">
+      <h1 class="Header-title">Web Knowledge Assistant</h1>
+    </header>
+
+    <main class="Conversation">
+      <div class="Conversation-body">
+        <div class="Conversation-history">
+          <div rv-each-item="conversation" class="Conversation-message" rv-class-user="item.is_user">
+            <a rv-href="item.url" class="Conversation-messageCaption">{ item.caption }</a>
+            <pre class="Conversation-messageText">{ item.text }</pre>
+          </div>
+        </div>
+        <div class="Conversation-textbox" rv-class-error="error">
+          <div class="u-textbox Conversation-input" autofocus contenteditable rv-input="message ? empty"></div>
+          <span class="u-placeholder">Your message here...</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
