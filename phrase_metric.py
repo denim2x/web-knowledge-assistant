@@ -10,6 +10,7 @@ from util import mixin, mean, casefold
 
 # Rationale: {Egypt} ~ {Egyptian} > {Tennessee} ~ {Egyptian}
 IC_CORPUS = wn_ic.ic('ic-shaks.dat')
+_lemmata = False
 
 def _parse(*args, **kw):  # FIXME (workaround)
   from pattern.text.en import parser
@@ -133,7 +134,7 @@ class _Text:
     if not isinstance(self, Text):
       if isinstance(self, list):
         self = '\n'.join(e for e in self if e)
-      self = _parse(self, lemmata=lemmata)
+      self = _parse(self, lemmata=lemmata and _lemmata)
     return self
 
   @property
@@ -180,9 +181,10 @@ def distance(a, b):
   return 1 - similarity(a, b)
 
 
-while True:   # FIXME (workaround)
+for i in range(5):   # FIXME (workaround)
   try:
     _parse('sample text', lemmata=True)
+    _lemmata = True
     break
   except (RuntimeError, ValueError):
     pass
