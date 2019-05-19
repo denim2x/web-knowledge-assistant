@@ -1,5 +1,5 @@
-uvicorn=0.7.0
-bareasgi=1.0.3
+uvicorn==0.7.0
+bareasgi==1.0.3
 bareasgi_static
 PyYAML
 requests

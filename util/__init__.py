@@ -1,7 +1,7 @@
 import os
 from platform import python_version_tuple as get_pyversion
 from statistics import mean as _mean, StatisticsError
-
+from collections.abc import Iterable
 
 pyversion = tuple(int(e) for e in get_pyversion())
 if pyversion >= (3, 6, 0):
@@ -39,6 +39,14 @@ def mixin(target):
       setattr(target, name, attr)
     return cls
   return deco
+
+@mixin(Iterable)
+class _Iterable:
+  def __getitem__(self, index):
+    _iter = iter(self)
+    for i in range(0, index):
+      next(_iter)
+    return next(_iter)
 
 from requests import Request, Session
 _session = Session()

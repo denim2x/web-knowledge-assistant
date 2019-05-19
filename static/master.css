@@ -90,7 +90,7 @@ button {
 }
 
 .error {
-  background: hsl(0deg, 68%, 87%);
+  background: hsl(0deg, 68%, 87%) !important;
 }
 
 .Root {
@@ -104,8 +104,9 @@ button {
   height: 100%;
   margin: 0;
   padding: 0;
-  /*display: grid;*/
-  grid-template-columns: auto 1fr;
+  display: grid;
+  /*grid-template-columns: auto 1fr;*/
+  grid-template-columns: 0 auto;
   grid-template-rows: min-content auto;
   background: hsl(0deg, 0%, 80%);
 }
@@ -142,7 +143,7 @@ button {
   flex-direction: column-reverse;
   background: hsl(0deg, 0%, 90%);
   position: relative;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   height: 100%;
 }
@@ -152,15 +153,17 @@ button {
   position: absolute;
   bottom: 0;
   width: 100%;
+  min-width: 380px;
 }
 
 .Conversation-history {
   padding: 15px;
-  margin: 0;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   list-style: none;
   box-sizing: border-box;
+  max-width: 900px;
 }
 
 .Conversation-message {
@@ -176,6 +179,10 @@ button {
 
 .Conversation-message.user {
   align-self: initial;
+}
+
+.Conversation-message.user .Conversation-messageCaption {
+  display: none;
 }
 
 .Conversation-messageCaption {
@@ -208,6 +215,7 @@ button {
   position: sticky;
   width: 100%;
   background: hsla(0deg, 0%, 90%, 90%);
+  bottom: 0;
 
   transition: 0.4s background-color;
 }

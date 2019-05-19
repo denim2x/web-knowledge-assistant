@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+from collections import namedtuple
 
 from pattern.en import parsetree
 from pattern.en.wordnet import _pattern2wordnet as _pos, wn_ic, wn, WordNetSynset as Synset
@@ -7,17 +8,22 @@ from pattern.text.tree import Text, Sentence, Chunk, Word
 
 from util import mixin, mean, casefold
 
-# Rationale: {Egypt}.lin_similarity({Egyptian}) > {Tennessee}.lin_similarity({Egyptian})
-IC_CORPUS = wn_ic.ic('ic-bnc.dat')
+# Rationale: {Egypt} ~ {Egyptian} > {Tennessee} ~ {Egyptian}
+IC_CORPUS = wn_ic.ic('ic-shaks.dat')
 
-def fix_parser():
-  from pattern.text.en import parser  # FIXME
+def _parse(*args, **kw):  # FIXME (workaround)
+  from pattern.text.en import parser
   if isinstance(parser.model, str):
     from pattern.text import Model
     parser.model = Model(path=parser.model)
 
-def _lemma(word):
-  return { casefold(word), casefold(word.lemma or word) }
+  return parsetree(*args, **kw)
+
+def _casefold(text):
+  return { casefold(text), casefold(getattr(text, 'lemma', text)) }
+
+def _similar(a, b):
+  return bool(_casefold(a) & _casefold(b))
 
 def _ratio(*data):
   _len = [len(e) for e in data]
@@ -26,6 +32,9 @@ def _ratio(*data):
 def _mean(data, threshold=0, default=0):
   return mean((e for e in data if e > threshold), default)
 
+def _min(data, threshold=0, default=0):
+  return min((e for e in data if e > threshold), default=default)
+
 @mixin(Synset)
 class _Synset:
   def similarity(self, other):
@@ -33,9 +42,8 @@ class _Synset:
       return None
     if self._pos in 'asr':
       return self.wup_similarity(other)
-    #return self.jcn_similarity(other, IC_CORPUS)
-    return self.lin_similarity(other, IC_CORPUS)
-
+    return self.jcn_similarity(other, IC_CORPUS)
+    
 @mixin(Word)
 class _Word:
   def synsets(self, type=None):
@@ -53,14 +61,17 @@ class _Word:
       return max(self._similarity(other), default=default)
       #return self._similarity(other)
 
-    if self.type == other.type and _lemma(self) & _lemma(other):
+    if self.type == other.type and _similar(self, other):
       return 1
     return max(self._similarity(other), default=default)
     #return self._similarity(other)
 
+Factor = namedtuple('Factor', ('factor', 'value'))
 
 @mixin(Chunk)
 class _Chunk:
+  factors = dict(VP=0.07, ADJP=0.02, ADVP=0.01)
+
   @property
   def nouns(self):
     if not hasattr(self, '_nouns'):
@@ -72,22 +83,21 @@ class _Chunk:
   def main(self):
     return self.type == 'NP'
 
+  def _related(self, other, type, scaling):
+    factor = self.factors[type]
+    a, b = (e.nearest(type) for e in (self, other))
+    if None in {a, b}:
+      return Factor(0, 0)
+    return Factor(factor, a._similarity(b, scaling))
+
   def similarity(self, other, value=None, scaling=True):
     if value is None:
       return self._similarity(other, scaling)
 
-    def related(type, factor):
-      a, b = (e.nearest(type) for e in (self, other))
-      if None in {a, b}:
-        return 0, 0
-      return factor, a._similarity(b, scaling)
+    related = [self._related(other, type, scaling) for type in self.factors]
+    factor = 1 - sum(e.factor for e in related)
 
-    vp, VP = related('VP', 0.07)
-    adjp, ADJP = related('ADJP', 0.06)
-    advp, ADVP = related('ADVP', 0.05)
-
-    #value = self._similarity(other, scaling)
-    return (1 - (vp + adjp + advp)) * value + vp * VP + adjp * ADJP + advp * ADVP
+    return factor * value + sum(e.factor * e.value for e in related)
 
   @property
   def lemma(self):
@@ -96,10 +106,10 @@ class _Chunk:
     return self._lemma
 
   def _similarity(self, other, scaling, default=0):
-    if self.type == other.type and _lemma(self) & _lemma(other):
+    if self.type == other.type and _similar(self, other):
       return 1
     ratio = _ratio(self, other) if scaling else 1
-    return _mean(w.similarity(other) for w in self) * ratio
+    return _mean((w.similarity(other) for w in self), default=0) * ratio
 
 @mixin(Sentence)
 class _Sentence:
@@ -120,11 +130,10 @@ class _Text:
   def __new__(cls, self, lemmata=True):
     if self is None:
       return self
-    if isinstance(self, list):
-      self = '\n'.join(e for e in self if e)
     if not isinstance(self, Text):
-      fix_parser()
-      self = parsetree(self, lemmata=lemmata)
+      if isinstance(self, list):
+        self = '\n'.join(e for e in self if e)
+      self = _parse(self, lemmata=lemmata)
     return self
 
   @property
@@ -141,7 +150,7 @@ class _Text:
 
 
 def validate(self):
-  return len(_Text(self).noun_phrases) > 0
+  return bool(_Text(self).noun_phrases)
 
 
 def similarity(a, b, scaling='inner', split=5):
@@ -170,4 +179,11 @@ def similarity(a, b, scaling='inner', split=5):
 def distance(a, b):
   return 1 - similarity(a, b)
 
+
+while True:   # FIXME (workaround)
+  try:
+    _parse('sample text')
+    break
+  except (RuntimeError, ValueError):
+    pass
 
