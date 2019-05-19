@@ -182,7 +182,7 @@ def distance(a, b):
 
 while True:   # FIXME (workaround)
   try:
-    _parse('sample text')
+    _parse('sample text', lemmata=True)
     break
   except (RuntimeError, ValueError):
     pass
